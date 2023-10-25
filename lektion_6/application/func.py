@@ -1,7 +1,7 @@
 # Den här filen innehåller funktionalitet som inte är specific för Flask och servern.
 # Eftersom flask inte har funktioner för att ropa på andra servrar, använder vi i denna modul istället urllib.
 # Vi har nedan importerat request från urllib för att kunna ropa på externa API:er.
-
+import datetime
 import urllib
 from urllib import request
 # SSL står för Secure Socket Layer och handlar om krypterade kopplingar mellan klient och server, t.ex via HTTPS, eller SSH
@@ -86,14 +86,31 @@ def available_countries():
     
     return data
 
-def cloudflare_data():
-    context = ssl._create_unverified_context()
+def user_country():
     data_url = "https://1.1.1.1/cdn-cgi/trace"
-    data = urllib.request.urlopen(data_url, context=context).read()
-    str_data = str(data)
-    split_string = str_data.split("=")
-    ccode = split_string[19]
+    context = ssl._create_unverified_context()
+    str_data = urllib.request.urlopen(data_url, context=context).read().decode('utf-8')
+    lines = str_data.split('\n')  # Dela upp strängen i rader
+    for line in lines:
+        key, value = line.split('=')  # Dela upp varje rad i nyckel och värde
+        if key == 'loc':
+            countrycode = value
+            break  # Om vi har hittat "loc", avsluta loopen
+
+    return countrycode
+
+def this_years_holidays(countrycode, columns=None):
+    today = datetime.date.today()
+    year = today.year
     
-    print(ccode)
-    
-cloudflare_data()
+    data_url = f"https://date.nager.at/api/v3/PublicHolidays/{year}/{countrycode}"
+    context = ssl._create_unverified_context()
+    json_data = urllib.request.urlopen(data_url, context=context).read() 
+    data = json.loads(json_data)
+    df = pd.DataFrame(data)
+    if columns==None:
+        table_data = df.to_html(classes="table p-5", justify="left")    
+    else:
+        table_data = df.to_html(columns=columns,classes="table p-5", justify="left")
+
+    return table_data

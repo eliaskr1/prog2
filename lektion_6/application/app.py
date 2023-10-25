@@ -20,9 +20,10 @@ app = Flask(__name__)
 def index():
     '''Denna funktion körs när man går till servern utan endpoint. 
        På en statisk webbsida skulle detta t.ex motsvara filen index.html''' 
+    
+    countrycode = func.user_country()
 
-    # Hämta index.html och uppdatera den med hjälp av Jinja, skicka den sedan till klienten (browsern)
-    return render_template('index.html')
+    return render_template('index.html', data=func.this_years_holidays(countrycode), headline="Welcome!")
 
 
 @app.route("/form") 
@@ -30,7 +31,7 @@ def form():
     '''Denna funktion körs när man går till servern med  endpoint '/form'. 
        På en statisk webbsida skulle detta t.ex kunna motsvara filen mappen /form med filen index.htm'''
 
-    return render_template('form.html', data=func.available_countries())
+    return render_template('form.html', data=func.available_countries(), headline="Please fill in the form.")
 
 
 @app.route("/api", methods=["POST"]) 
@@ -54,7 +55,7 @@ def api_post():
     data = func.json_url_to_html_table(data_url)
 
     # Skicka tillbaka resultatet till browsern med Jinja, dvs uppdatera mallen index.html med innehållet i variabeln data
-    return render_template('index.html', data=data)
+    return render_template('index.html', data=data, headline="Thanks for using our service!")
 
 
 @app.route("/api/xml") 
